@@ -1,95 +1,80 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+'use client';
+
+import { Loader } from "@googlemaps/js-api-loader";
+import { useRef, useState } from "react";
+import styles from "./page.module.css";
+import geom from "../../public/geometries.json";
+
+var map: google.maps.Map;
+
+interface MapProps {
+  loader: Loader,
+  divNode: HTMLElement,
+  routeSelection: number
+}
+
+interface RouteProps {
+  loader: Loader,
+  routeSelection: number,
+}
+
+async function loadMap({ loader, divNode } : MapProps){
+  const { Map } = await loader.importLibrary("maps");
+  map = new Map(divNode, {
+      center: { lat: -23.6980, lng: 133.8807 },
+      zoom: 4,
+  });
+}
+
+async function plotRoute({ loader, routeSelection }: RouteProps){
+  const { DirectionsService, DirectionsRenderer, DirectionsStatus } = await loader.importLibrary("routes");
+  const routeGeom = geom[routeSelection].route_geom
+  const segments = routeGeom.substring(12, routeGeom.length - 2).split(",").map(latStr => latStr.trim().split(' '))
+  const directionsService = new DirectionsService();
+  let rendererOptions = {
+    preserveViewport: true,
+    suppressMarkers: true,
+    routeIndex: 0
+  }
+
+  segments.map((segment, i) => {
+    const request = {
+      origin: segment[0],
+      destination: segment[1],
+      travelMode: google.maps.TravelMode.DRIVING
+    }
+
+    const directionsDisplay = new DirectionsRenderer({ ...rendererOptions, routeIndex: i })
+    directionsDisplay.setMap(map)
+
+    directionsService.route(request, (result, status) =>{
+      console.log(result)
+
+      if(status == DirectionsStatus.OK){
+        directionsDisplay.setDirections(result);
+      }
+    })
+  })
+}
 
 export default function Home() {
+  const loader = new Loader({
+    apiKey: process.env.NEXT_PUBLIC_API_KEY ?? "",
+    version: "weekly",
+  });
+
+  const [routeSelection, setRouteSelection] = useState(0);
   return (
     <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+      <div className={styles.selections}>
+        <select value={routeSelection} onChange={e => setRouteSelection(parseInt(e.target.value))}>
+          { geom.map((data, i) => <option value={i} key={i}>{data.route_name}</option>)}
+        </select>
       </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+      <div className={styles.map} ref={node => {
+        if(map == null) loadMap({ loader, divNode: node as HTMLElement, routeSelection }).catch(reason => console.log(reason))
+        plotRoute({ loader, routeSelection })
+      }}></div>
     </main>
   )
 }
