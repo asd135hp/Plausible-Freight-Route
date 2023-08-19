@@ -4,10 +4,12 @@ import { Loader } from "@googlemaps/js-api-loader";
 import { useState } from "react";
 import styles from "./page.module.css";
 import geom from "../../public/geometries.json";
+import intermodal from "../../public/intermodal_terminals.json";
 
 var map: google.maps.Map;
 var plottedPoly: google.maps.Polyline[] = [];
 var renderer: google.maps.DirectionsRenderer | null = null;
+var areaRenderer: google.maps.DirectionsRenderer[] = [];
 var colors: string[] = ["#51b0fd", "#bbbdbf", "#bbbdbf", "#bbbdbf", "#bbbdbf", "#bbbdbf"]
 
 interface MapProps {
@@ -22,6 +24,8 @@ interface RouteProps {
   clearPreviousRoute: boolean,
   showWaypoints: boolean
 }
+
+const arrToLatLng = (arr: number[]) => ({ lat: arr[1], lng: arr[0] })
 
 async function loadMap({ loader, divNode } : MapProps){
   const { Map } = await loader.importLibrary("maps");
@@ -45,10 +49,7 @@ async function plotRoute({ loader, routeSelection, clearPreviousRoute, showWaypo
 
   const waypoints = routeGeom.substring(12, routeGeom.length - 2)
     .split(",")
-    .map(latStr => {
-      const arr = latStr.trim().split(' ').map(val => parseFloat(val))
-      return { lat: arr[1], lng: arr[0] }
-    }) as { lat: number, lng: number }[]
+    .map(latStr => arrToLatLng(latStr.trim().split(' ').map(val => parseFloat(val)))) as { lat: number, lng: number }[]
 
   // for each road segment represented by a set of latLng object, plot that segment into the map
   const request: google.maps.DirectionsRequest = {
@@ -96,6 +97,51 @@ async function plotRoute({ loader, routeSelection, clearPreviousRoute, showWaypo
   map.setZoom(11)
 }
 
+async function plotArea(loader: Loader){
+  const { DirectionsService, DirectionsRenderer, DirectionsStatus } = await loader.importLibrary("routes");
+  const directionsService = new DirectionsService();
+
+  function isFlatArray(arr: number[] | number[][]){
+    for(let val of arr){
+      if(Array.isArray(val)) return false
+    }
+    return true
+  }
+
+  function convertToTwoDimension(arr: number[][] | number[][][]) {
+    let result: number[][] = []
+    for(let inner of arr){
+      if(!isFlatArray(inner)) result.push(...(inner as number[][]))
+      result.push(inner as number[])
+    }
+    return result
+  }
+
+  function plot(coords: number[][]){
+    // for each road segment represented by a set of latLng object, plot that segment into the map
+    const request: google.maps.DirectionsRequest = {
+      origin: arrToLatLng(coords[0]),
+      destination: arrToLatLng(coords[coords.length - 1]),
+      waypoints: coords.slice(1, -2).map(arr => ({ location: arrToLatLng(arr), stopover: false })),
+      travelMode: google.maps.TravelMode.DRIVING,
+      avoidHighways: false,
+      avoidTolls: false,
+      avoidFerries: false
+    }
+
+    directionsService.route(request, (result, status) => {
+      if(result && status == DirectionsStatus.OK){
+        areaRenderer.push(new DirectionsRenderer({ map, directions: result, routeIndex: 0}))
+      }
+    })    
+  }
+
+  intermodal.features.map(feature => {
+    const coordinates = feature.geometry.coordinates
+    coordinates.map(coords => plot(convertToTwoDimension(coords)))
+  })
+}
+
 export default function Home() {
   const loader = new Loader({
     apiKey: process.env.NEXT_PUBLIC_API_KEY ?? "",
@@ -103,16 +149,26 @@ export default function Home() {
   });
 
   const [routeSelection, setRouteSelection] = useState(0);
+
   return (
     <main className={styles.main}>
       <div className={styles.selections}>
+        <span>National freight congestion route:&nbsp;</span>
         <select value={routeSelection} onChange={e => setRouteSelection(parseInt(e.target.value))}>
           { geom.map((data, i) => <option value={i} key={i}>{data.route_name}</option>)}
         </select>
       </div>
       <div className={styles.map} ref={node => {
-        if(map == null) loadMap({ loader, divNode: node as HTMLElement, routeSelection }).catch(reason => console.log(reason))
-        if(node) plotRoute({ loader, routeSelection, clearPreviousRoute: true, showWaypoints: false })
+        // initialization
+        if(map == null) {
+          loadMap({ loader, divNode: node as HTMLElement, routeSelection }).catch(reason => console.log(reason))
+          plotArea(loader)
+        }
+
+        // only plot if the element is available
+        if(node) {
+          plotRoute({ loader, routeSelection, clearPreviousRoute: true, showWaypoints: true })
+        }
       }}></div>
     </main>
   )
