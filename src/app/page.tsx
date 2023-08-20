@@ -2,7 +2,7 @@
 
 import { Loader } from "@googlemaps/js-api-loader";
 import { useState } from "react";
-import { Point } from "../convexHull";
+import { Point, makeHull } from "../convexHull";
 import styles from "./page.module.css";
 import geom from "../../public/geometries.json";
 import intermodal from "../../public/intermodal_terminals.json";
