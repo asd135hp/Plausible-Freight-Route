@@ -30,7 +30,7 @@ export interface Point {
 // This algorithm runs in O(n log n) time.
 export function makeHull<P extends Point>(points: Readonly<Array<P>>): Array<P> {
     let newPoints: Array<P> = points.slice();
-    newPoints.sort(convexhull.POINT_COMPARATOR);
+    newPoints.sort(POINT_COMPARATOR);
     return makeHullPresorted(newPoints);
 }
 
