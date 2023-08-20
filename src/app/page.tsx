@@ -43,6 +43,11 @@ async function loadMap({ loader, divNode } : MapProps){
   });
 }
 
+function getWaypoints(waypoints: any[]){
+  while(waypoints.length > 22) waypoints.pop();
+  return waypoints
+}
+
 async function initializeRoutes(loader: Loader) {
   const { DirectionsService, DirectionsRenderer, DirectionsStatus } = await loader.importLibrary("routes");
   const directionsService = new DirectionsService();
@@ -58,7 +63,7 @@ async function initializeRoutes(loader: Loader) {
     const request: google.maps.DirectionsRequest = {
       origin: waypoints[0],
       destination: waypoints[waypoints.length - 1],
-      waypoints: waypoints.slice(1, -2).map(latLng => ({ location: latLng, stopover: false })),
+      waypoints: getWaypoints(waypoints.slice(1, -2).map(latLng => ({ location: latLng, stopover: false }))),
       travelMode: google.maps.TravelMode.DRIVING,
       avoidHighways: false,
       avoidTolls: false,
@@ -86,11 +91,6 @@ async function initializeRoutes(loader: Loader) {
 
 function toggleRoute(routeIndex: number, isLoad: boolean){
   routeRenderer[routeIndex].setMap(isLoad ? map : null)
-}
-
-function getWaypoints(waypoints: any[]){
-  while(waypoints.length > 22) waypoints.pop();
-  return waypoints
 }
 
 async function initializeTerminals(loader: Loader){
