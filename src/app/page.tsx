@@ -85,6 +85,7 @@ function toggleRoute(routeIndex: number, isLoad: boolean){
   routeRenderer[routeIndex].setMap(isLoad ? map : null)
 }
 
+/*
 async function plotRoute({ loader, routeSelection, clearPreviousRoute, showWaypoints }: RouteProps){
   // clear previous routes since the plotted lines will polute the map
   if(clearPreviousRoute){
@@ -145,7 +146,7 @@ async function plotRoute({ loader, routeSelection, clearPreviousRoute, showWaypo
 
   map.panTo(waypoints[Math.round(waypoints.length / 2)])
   map.setZoom(11)
-}
+} */
 
 async function initializeTerminals(loader: Loader){
   const { DirectionsService, DirectionsRenderer, DirectionsStatus } = await loader.importLibrary("routes");
