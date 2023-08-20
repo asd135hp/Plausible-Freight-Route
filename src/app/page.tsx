@@ -191,7 +191,7 @@ export default function Home() {
           onChange={e => toggleTerminals(e.target.checked)}
           checked
         />
-        <label for="intermoal_checkbox">Show intermodal terminals</label>
+        <label htmlFor="intermoal_checkbox">Show intermodal terminals</label>
       </div>
       <div className={styles.map} ref={node => {
         // initialization
