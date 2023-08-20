@@ -53,6 +53,7 @@ async function initializeRoutes(loader: Loader) {
       .split(",")
       .map(latStr => arrToLatLng(latStr.trim().split(' ').map(val => parseFloat(val)))) as { lat: number, lng: number }[]
 
+    console.log(geomObj.route_name, routeGeom)
     // for each road segment represented by a set of latLng object, plot that segment into the map
     const request: google.maps.DirectionsRequest = {
       origin: waypoints[0],
@@ -86,69 +87,6 @@ async function initializeRoutes(loader: Loader) {
 function toggleRoute(routeIndex: number, isLoad: boolean){
   routeRenderer[routeIndex].setMap(isLoad ? map : null)
 }
-
-/*
-async function plotRoute({ loader, routeSelection, clearPreviousRoute, showWaypoints }: RouteProps){
-  // clear previous routes since the plotted lines will polute the map
-  if(clearPreviousRoute){
-    plottedPoly.map(poly => poly.setMap(null))
-    renderer?.setMap(null)
-    plottedPoly = [];
-  }
-
-  const { DirectionsService, DirectionsRenderer, DirectionsStatus } = await loader.importLibrary("routes");
-  const routeGeom = geom[routeSelection].route_geom
-  const directionsService = new DirectionsService();
-
-  const waypoints = routeGeom.substring(12, routeGeom.length - 2)
-    .split(",")
-    .map(latStr => arrToLatLng(latStr.trim().split(' ').map(val => parseFloat(val)))) as { lat: number, lng: number }[]
-
-  // for each road segment represented by a set of latLng object, plot that segment into the map
-  const request: google.maps.DirectionsRequest = {
-    origin: waypoints[0],
-    destination: waypoints[waypoints.length - 1],
-    waypoints: waypoints.slice(1, -2).map(latLng => ({ location: latLng, stopover: false })),
-    travelMode: google.maps.TravelMode.DRIVING,
-    provideRouteAlternatives: true,
-    avoidHighways: false,
-    avoidTolls: false,
-    avoidFerries: false
-  }
-
-  // remove waypoints if no show
-  if(!showWaypoints) delete request.waypoints
-
-  directionsService.route(request, (result, status) =>{
-    console.log(result)
-
-    if(result && status == DirectionsStatus.OK){
-      renderer = new DirectionsRenderer({ map, directions: result, routeIndex: 0 })
-
-      // courtesy to https://stackoverflow.com/questions/32831558/google-map-alternative-roads-show-with-different-colour
-      for (var j = result.routes.length - 1, polyArray = []; j >= 0; j--) {
-        var path = new google.maps.MVCArray();
-        polyArray.push(
-          new google.maps.Polyline({
-            map,
-            strokeColor: colors[j],
-            strokeOpacity: 1.0,
-            strokeWeight: 5
-          })
-        );
-        polyArray[polyArray.length - 1].setPath(path);
-        for (var i = 0, len = result.routes[j].overview_path.length; i < len; i++) {
-          path.push(result.routes[j].overview_path[i]);
-        }
-
-        if(clearPreviousRoute) plottedPoly.push(...polyArray)
-      }
-    }
-  })
-
-  map.panTo(waypoints[Math.round(waypoints.length / 2)])
-  map.setZoom(11)
-} */
 
 async function initializeTerminals(loader: Loader){
   const { DirectionsService, DirectionsRenderer, DirectionsStatus } = await loader.importLibrary("routes");
