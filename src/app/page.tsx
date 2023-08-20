@@ -13,6 +13,12 @@ var renderer: google.maps.DirectionsRenderer | null = null;
 var areaRenderer: google.maps.DirectionsRenderer[] = [];
 var colors: string[] = ["#51b0fd", "#bbbdbf", "#bbbdbf", "#bbbdbf", "#bbbdbf", "#bbbdbf"]
 
+const polylineOptions = new google.maps.Polyline({
+  strokeColor: "#000000",
+  strokeOpacity: 0.5,
+  strokeWeight: 10,
+})
+
 interface MapProps {
   loader: Loader,
   divNode: HTMLElement,
@@ -141,7 +147,7 @@ async function plotArea(loader: Loader){
 
     directionsService.route(request, (result, status) => {
       if(result && status == DirectionsStatus.OK){
-        areaRenderer.push(new DirectionsRenderer({ map, directions: result, routeIndex: 0}))
+        areaRenderer.push(new DirectionsRenderer({ map, directions: result, routeIndex: 0, polylineOptions }))
       }
     })    
   }
