@@ -10,17 +10,8 @@ import intermodal from "../../public/intermodal_terminals.json";
 var map: google.maps.Map;
 var plottedPoly: google.maps.Polyline[] = [];
 var renderer: google.maps.DirectionsRenderer | null = null;
-var areaRenderer: google.maps.DirectionsRenderer[] = [];
+var terminalRenderer: google.maps.DirectionsRenderer[] = []
 var colors: string[] = ["#51b0fd", "#bbbdbf", "#bbbdbf", "#bbbdbf", "#bbbdbf", "#bbbdbf"]
-
-const polylineOptions = {
-  clickable: true,
-  strokeColor: "black",
-  strokeOpacity: 0.5,
-  strokeWidth: 5,
-  visible: true,
-  zIndex: -1
-}
 
 interface MapProps {
   loader: Loader,
@@ -112,7 +103,7 @@ async function plotRoute({ loader, routeSelection, clearPreviousRoute, showWaypo
   map.setZoom(11)
 }
 
-async function plotArea(loader: Loader){
+async function initializeTerminals(loader: Loader){
   const { DirectionsService, DirectionsRenderer, DirectionsStatus } = await loader.importLibrary("routes");
   const directionsService = new DirectionsService();
 
@@ -150,7 +141,19 @@ async function plotArea(loader: Loader){
 
     directionsService.route(request, (result, status) => {
       if(result && status == DirectionsStatus.OK){
-        areaRenderer.push(new DirectionsRenderer({ map, directions: result, routeIndex: 0, polylineOptions }))
+        terminalRenderer.push(new DirectionsRenderer({
+          map,
+          directions: result,
+          routeIndex: 0,
+          polylineOptions: {
+            clickable: true,
+            strokeColor: "black",
+            strokeOpacity: 0.5,
+            strokeWidth: 5,
+            visible: true,
+            zIndex: -1
+          }
+        }))
       }
     })    
   }
@@ -159,6 +162,10 @@ async function plotArea(loader: Loader){
     const coordinates = feature.geometry.coordinates
     coordinates.map(coords => plot(makeHull(convertToPoint(coords))))
   })
+}
+
+async function toggleTerminals(isLoad: boolean){
+  terminalRenderer.map(renderer => renderer.setMap(isLoad ? map : null))
 }
 
 export default function Home() {
@@ -177,11 +184,20 @@ export default function Home() {
           { geom.map((data, i) => <option value={i} key={i}>{data.route_name}</option>)}
         </select>
       </div>
+      <div className={styles.selections}>
+        <input
+          type="checkbox"
+          id="intermodal_checkbox"
+          onChange={e => toggleTerminals(e.target.checked)}
+          checked
+        />
+        <label for="intermoal_checkbox">Show intermodal terminals</label>
+      </div>
       <div className={styles.map} ref={node => {
         // initialization
         if(map == null) {
           loadMap({ loader, divNode: node as HTMLElement, routeSelection }).catch(reason => console.log(reason))
-          plotArea(loader)
+          initializeTerminals(loader)
         }
 
         // only plot if the element is available
