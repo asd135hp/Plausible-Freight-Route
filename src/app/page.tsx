@@ -13,13 +13,15 @@ var renderer: google.maps.DirectionsRenderer | null = null;
 var areaRenderer: google.maps.DirectionsRenderer[] = [];
 var colors: string[] = ["#51b0fd", "#bbbdbf", "#bbbdbf", "#bbbdbf", "#bbbdbf", "#bbbdbf"]
 
-const polylineOptions = new google.maps.PolylineOptions()
-  .color("black")
-  .clickable(true)
-  .visible(true)
-  .width(5)
-  .zIndex(-1)
-  
+const polylineOptions = {
+  clickable: true,
+  strokeColor: "black",
+  strokeOpacity: 0.5,
+  strokeWidth: 5,
+  visible: true,
+  zIndex: -1
+}
+
 interface MapProps {
   loader: Loader,
   divNode: HTMLElement,
