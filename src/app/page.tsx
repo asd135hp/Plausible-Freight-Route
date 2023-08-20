@@ -253,9 +253,7 @@ export default function Home() {
             let id = `${data.route_name}${i}`
             return <p key={id}>
               <input type="checkbox" onChange={e => {
-                if(e.target.checked){
-                  toggleRoute(i, e.target.checked)
-                }
+                toggleRoute(i, e.target.checked)
               }} id={id}/>
               <label htmlFor={id}>{data.route_name}</label>
             </p>
