@@ -9,7 +9,7 @@ import intermodal from "../../public/intermodal_terminals.json";
 
 var map: google.maps.Map;
 var plottedPoly: google.maps.Polyline[] = [];
-var renderer: google.maps.DirectionsRenderer | null = null;
+var routeRenderer: google.maps.DirectionsRendere[] = [];
 var terminalRenderer: google.maps.DirectionsRenderer[] = []
 var colors: string[] = ["#51b0fd", "#bbbdbf", "#bbbdbf", "#bbbdbf", "#bbbdbf", "#bbbdbf"]
 
@@ -21,9 +21,9 @@ interface MapProps {
 
 interface RouteProps {
   loader: Loader,
-  routeSelection: number,
-  clearPreviousRoute: boolean,
-  showWaypoints: boolean
+  routeSelection: number
+  //clearPreviousRoute: boolean,
+  //showWaypoints: boolean
 }
 
 interface LatLngPoint extends Point {
@@ -39,6 +39,50 @@ async function loadMap({ loader, divNode } : MapProps){
     center: { lat: -23.6980, lng: 133.8807 },
     zoom: 4,
   });
+}
+
+async function initializeRoute({ loader, routeSelection }: RouteProps) {
+  const { DirectionsService, DirectionsRenderer, DirectionsStatus } = await loader.importLibrary("routes");
+  const directionsService = new DirectionsService();
+
+  geom.map(geomObj => {
+    const routeGeom = geomObj.route_geom
+    const waypoints = routeGeom.substring(12, routeGeom.length - 2)
+      .split(",")
+      .map(latStr => arrToLatLng(latStr.trim().split(' ').map(val => parseFloat(val)))) as { lat: number, lng: number }[]
+
+    // for each road segment represented by a set of latLng object, plot that segment into the map
+    const request: google.maps.DirectionsRequest = {
+      origin: waypoints[0],
+      destination: waypoints[waypoints.length - 1],
+      waypoints: waypoints.slice(1, -2).map(latLng => ({ location: latLng, stopover: false })),
+      travelMode: google.maps.TravelMode.DRIVING,
+      avoidHighways: false,
+      avoidTolls: false,
+      avoidFerries: false
+    }
+
+    directionsService.route(request, (result, status) =>{
+      if(result && status == DirectionsStatus.OK){
+        routeRenderer.push(new DirectionsRenderer({
+          directions: result,
+          routeIndex: 0,
+          polylineOptions: {
+            clickable: true,
+            strokeColor: "#51b0fd",
+            strokeOpacity: 1,
+            strokeWeight: 5,
+            visible: true,
+            zIndex: 100
+          }
+        }))
+      }
+    })
+  })
+}
+
+function toggleRoute(routeIndex: number, isLoad: boolean){
+  routeRenderer[routeIndex].setMap(isLoad ? map : null)
 }
 
 async function plotRoute({ loader, routeSelection, clearPreviousRoute, showWaypoints }: RouteProps){
@@ -164,7 +208,7 @@ async function initializeTerminals(loader: Loader){
   })
 }
 
-async function toggleTerminals(isLoad: boolean){
+function toggleTerminals(isLoad: boolean){
   terminalRenderer.map(renderer => renderer.setMap(isLoad ? map : null))
 }
 
@@ -175,36 +219,52 @@ export default function Home() {
   });
 
   const [routeSelection, setRouteSelection] = useState(0);
+  const [checked, setChecked] = useState(true)
 
   return (
-    <main className={styles.main}>
-      <div className={styles.selections}>
-        <span>National freight congestion route:&nbsp;</span>
+    <main className={styles.main_row}>
+      <div className={styles.main}>
+        <div className={styles.selections}>
+          <input
+            type="checkbox"
+            id="intermodal_checkbox"
+            onChange={e => { toggleTerminals(e.target.checked), setChecked(e.target.checked) }}
+            ref={node => { if(node) node.checked = checked }}
+          />
+          <label htmlFor="intermodal_checkbox">Show intermodal terminals</label>
+        </div>
+        <div className={styles.map} ref={node => {
+          // initialization
+          if(map == null) {
+            loadMap({ loader, divNode: node as HTMLElement, routeSelection })
+              .catch(reason => console.log(reason))
+            initializeTerminals(loader)
+          }
+
+          // only plot if the element is available
+          if(node) {
+            plotRoute({ loader, routeSelection, clearPreviousRoute: true, showWaypoints: true })
+          }
+        }}></div>
+      </div>
+      <div className={styles.checkboxList}>
+        <span>National freight congestion route:</span>
+        {
+          geom.map((data, i) => {
+            let id = `${data.route_name}${i}`
+            return <p key={id}>
+              <input type="checkbox" onChange={e => {
+                if(e.target.checked){
+                  toggleRoute(i, e.target.checked)
+                }
+              }} id={id}/>
+              <label htmlFor={id}>{data.route_name}</label>
+            </p>
+          })
+        }
         <select value={routeSelection} onChange={e => setRouteSelection(parseInt(e.target.value))}>
-          { geom.map((data, i) => <option value={i} key={i}>{data.route_name}</option>)}
         </select>
       </div>
-      <div className={styles.selections}>
-        <input
-          type="checkbox"
-          id="intermodal_checkbox"
-          onChange={e => toggleTerminals(e.target.checked)}
-          ref={node => { if(node) node.checked = true }}
-        />
-        <label htmlFor="intermoal_checkbox">Show intermodal terminals</label>
-      </div>
-      <div className={styles.map} ref={node => {
-        // initialization
-        if(map == null) {
-          loadMap({ loader, divNode: node as HTMLElement, routeSelection }).catch(reason => console.log(reason))
-          initializeTerminals(loader)
-        }
-
-        // only plot if the element is available
-        if(node) {
-          plotRoute({ loader, routeSelection, clearPreviousRoute: true, showWaypoints: true })
-        }
-      }}></div>
     </main>
   )
 }
