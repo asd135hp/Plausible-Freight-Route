@@ -53,7 +53,7 @@ async function initializeRoutes(loader: Loader) {
       .split(",")
       .map(latStr => arrToLatLng(latStr.trim().split(' ').map(val => parseFloat(val)))) as { lat: number, lng: number }[]
 
-    console.log(geomObj.route_name, routeGeom)
+    console.log(geomObj.route_name, waypoints)
     // for each road segment represented by a set of latLng object, plot that segment into the map
     const request: google.maps.DirectionsRequest = {
       origin: waypoints[0],
