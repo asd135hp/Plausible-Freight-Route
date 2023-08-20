@@ -33,7 +33,7 @@ interface LatLngPoint extends Point {
   lng: number
 }
 
-const arrToLatLng = (arr: number[]) => ({ lat: arr[1], lng: arr[0] })
+const arrToLatLng = (arr: number[]) => ({ lat: arr[0], lng: arr[1] })
 
 async function loadMap({ loader, divNode } : MapProps){
   const { Map } = await loader.importLibrary("maps");
