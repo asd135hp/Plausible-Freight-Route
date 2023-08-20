@@ -2,6 +2,7 @@
 
 import { Loader } from "@googlemaps/js-api-loader";
 import { useState } from "react";
+import { Point } from "../convexHull.ts";
 import styles from "./page.module.css";
 import geom from "../../public/geometries.json";
 import intermodal from "../../public/intermodal_terminals.json";
@@ -23,6 +24,11 @@ interface RouteProps {
   routeSelection: number,
   clearPreviousRoute: boolean,
   showWaypoints: boolean
+}
+
+interface LatLngPoint extends Point {
+  lat: number,
+  lng: number
 }
 
 const arrToLatLng = (arr: number[]) => ({ lat: arr[1], lng: arr[0] })
@@ -108,21 +114,25 @@ async function plotArea(loader: Loader){
     return true
   }
 
-  function convertToTwoDimension(arr: number[][] | number[][][]) {
-    let result: number[][] = []
+  function convertToPoint(arr: number[][] | number[][][]) {
+    let result: LatLngPoint[] = []
     for(let inner of arr){
-      if(!isFlatArray(inner)) result.push(...(inner as number[][]))
-      result.push(inner as number[])
+      if(!isFlatArray(inner)) result.push(...((inner as number[][]).map(pointArr => {
+        return { lat: pointArr[1], lng: pointArr[0], x: pointArr[0], y: pointArr[1] }
+      })))
+
+      let newArr = inner as number[]
+      result.push({ lat: newArr[1], lng: newArr[0], x: newArr[0], y: newArr[1] })
     }
     return result
   }
 
-  function plot(coords: number[][]){
+  function plot(coords: LatLngPoint[]){
     // for each road segment represented by a set of latLng object, plot that segment into the map
     const request: google.maps.DirectionsRequest = {
-      origin: arrToLatLng(coords[0]),
-      destination: arrToLatLng(coords[coords.length - 1]),
-      waypoints: coords.slice(1, -2).map(arr => ({ location: arrToLatLng(arr), stopover: false })),
+      origin: coords[0],
+      destination: coords[0],
+      waypoints: coords.slice(1).map(point => ({ location: point, stopover: false })),
       travelMode: google.maps.TravelMode.DRIVING,
       avoidHighways: false,
       avoidTolls: false,
@@ -138,7 +148,7 @@ async function plotArea(loader: Loader){
 
   intermodal.features.map(feature => {
     const coordinates = feature.geometry.coordinates
-    coordinates.map(coords => plot(convertToTwoDimension(coords)))
+    coordinates.map(coords => plot(makeHull(convertToPoint(coords))))
   })
 }
 
@@ -173,3 +183,4 @@ export default function Home() {
     </main>
   )
 }
+
