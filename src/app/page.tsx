@@ -247,7 +247,7 @@ export default function Home() {
         }}></div>
       </div>
       <div className={styles.checkboxList}>
-        <span>National freight congestion route:</span>
+        <h1>National freight congestion route:</h1>
         {
           geom.map((data, i) => {
             let id = `${data.route_name}${i}`
