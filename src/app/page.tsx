@@ -19,12 +19,14 @@ interface MapProps {
   routeSelection: number
 }
 
+/*
 interface RouteProps {
   loader: Loader,
   routeSelection: number
   //clearPreviousRoute: boolean,
   //showWaypoints: boolean
 }
+*/
 
 interface LatLngPoint extends Point {
   lat: number,
@@ -41,7 +43,7 @@ async function loadMap({ loader, divNode } : MapProps){
   });
 }
 
-async function initializeRoute({ loader, routeSelection }: RouteProps) {
+async function initializeRoute(loader: Loader) {
   const { DirectionsService, DirectionsRenderer, DirectionsStatus } = await loader.importLibrary("routes");
   const directionsService = new DirectionsService();
 
@@ -240,6 +242,7 @@ export default function Home() {
             loadMap({ loader, divNode: node as HTMLElement, routeSelection })
               .catch(reason => console.log(reason))
             initializeTerminals(loader)
+            initializeRoutes(loader)
           }
         }}></div>
       </div>
