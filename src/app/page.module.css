@@ -3,7 +3,7 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding-top: 2rem;
+  padding-top: 1rem;
   padding-left: 2rem;
   padding-right: 2rem;
   max-width: 100vw;
@@ -12,10 +12,10 @@
 .main {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: space-around;
   align-items: center;
   padding-right: 1rem;
-  min-height: 100vh;
+  min-height: 90vh;
 }
 
 .checkboxList {
