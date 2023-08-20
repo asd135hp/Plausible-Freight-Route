@@ -189,7 +189,7 @@ export default function Home() {
           type="checkbox"
           id="intermodal_checkbox"
           onChange={e => toggleTerminals(e.target.checked)}
-          checked
+          ref={node => { node.checked = true }}
         />
         <label htmlFor="intermoal_checkbox">Show intermodal terminals</label>
       </div>
