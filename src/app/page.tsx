@@ -241,11 +241,6 @@ export default function Home() {
               .catch(reason => console.log(reason))
             initializeTerminals(loader)
           }
-
-          // only plot if the element is available
-          if(node) {
-            plotRoute({ loader, routeSelection, clearPreviousRoute: true, showWaypoints: true })
-          }
         }}></div>
       </div>
       <div className={styles.checkboxList}>
