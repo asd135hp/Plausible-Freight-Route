@@ -9,7 +9,7 @@ import intermodal from "../../public/intermodal_terminals.json";
 
 var map: google.maps.Map;
 var plottedPoly: google.maps.Polyline[] = [];
-var routeRenderer: google.maps.DirectionsRendere[] = [];
+var routeRenderer: google.maps.DirectionsRenderer[] = [];
 var terminalRenderer: google.maps.DirectionsRenderer[] = []
 var colors: string[] = ["#51b0fd", "#bbbdbf", "#bbbdbf", "#bbbdbf", "#bbbdbf", "#bbbdbf"]
 
