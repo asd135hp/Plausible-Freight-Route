@@ -88,6 +88,11 @@ function toggleRoute(routeIndex: number, isLoad: boolean){
   routeRenderer[routeIndex].setMap(isLoad ? map : null)
 }
 
+function getWaypoints(waypoints: any[]){
+  while(waypoints.length > 22) waypoints.pop();
+  return waypoints
+}
+
 async function initializeTerminals(loader: Loader){
   const { DirectionsService, DirectionsRenderer, DirectionsStatus } = await loader.importLibrary("routes");
   const directionsService = new DirectionsService();
@@ -117,7 +122,7 @@ async function initializeTerminals(loader: Loader){
     const request: google.maps.DirectionsRequest = {
       origin: coords[0],
       destination: coords[0],
-      waypoints: coords.slice(1).map(point => ({ location: point, stopover: false })),
+      waypoints: getWaypoints(coords.slice(1).map(point => ({ location: point, stopover: false }))),
       travelMode: google.maps.TravelMode.DRIVING,
       avoidHighways: false,
       avoidTolls: false,
