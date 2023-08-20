@@ -149,7 +149,7 @@ async function initializeTerminals(loader: Loader){
             clickable: true,
             strokeColor: "black",
             strokeOpacity: 0.5,
-            strokeWidth: 5,
+            strokeWeight: 5,
             visible: true,
             zIndex: -1
           }
