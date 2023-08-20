@@ -43,7 +43,7 @@ async function loadMap({ loader, divNode } : MapProps){
   });
 }
 
-async function initializeRoute(loader: Loader) {
+async function initializeRoutes(loader: Loader) {
   const { DirectionsService, DirectionsRenderer, DirectionsStatus } = await loader.importLibrary("routes");
   const directionsService = new DirectionsService();
 
